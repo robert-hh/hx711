@@ -16,7 +16,7 @@ The default value of 128 also selects channel A.
 ### hx711 = HX711(data_pin, clock_pin, spi_clk, gain=128)
 
 This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI.
-spi_clk must be assigned but will be be used. Input-only pins must not be used for
+spi_clk must be assigned but will not be be used. Input-only pins must not be used for
 clock_pin and spi_clk. gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 

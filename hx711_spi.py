@@ -1,11 +1,13 @@
 from machine import Pin, SPI, idle
 
+
 class HX711:
     def __init__(self, dout, pd_sck, spi_clk, gain=128):
 
-        self.pSCK = Pin(pd_sck , mode=Pin.OUT)
+        self.pSCK = Pin(pd_sck, mode=Pin.OUT)
         self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)
-        self.spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0, phase=0, pins=(spi_clk, pd_sck, dout))
+        self.spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0,
+                       phase=0, pins=(spi_clk, pd_sck, dout))
         self.pSCK(0)
 
         self.clock_25 = b'\xaa\xaa\xaa\xaa\xaa\xaa\x80'
@@ -26,7 +28,7 @@ class HX711:
         self.time_constant = 0.1
         self.filtered = 0
 
-        self.set_gain(gain);
+        self.set_gain(gain)
 
     def set_gain(self, gain):
         if gain is 128:
@@ -50,7 +52,7 @@ class HX711:
 
         # pack the data into a single value
         result = 0
-        for _ in range (6):
+        for _ in range(6):
             result = (result << 4) + self.lookup[self.in_data[_] & 0x55]
 
         # return sign corrected result
@@ -65,7 +67,7 @@ class HX711:
     def read_lowpass(self):
         self.filtered += self.time_constant * (self.read() - self.filtered)
         return self.filtered
-        
+
     def get_value(self):
         return self.read_lowpass() - self.OFFSET
 
@@ -81,7 +83,7 @@ class HX711:
     def set_offset(self, offset):
         self.OFFSET = offset
 
-    def set_time_constant(self, time_constant = None):
+    def set_time_constant(self, time_constant=None):
         if time_constant is None:
             return self.time_constant
         elif 0 < time_constant < 1.0:

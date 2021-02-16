@@ -1,17 +1,25 @@
+from machine import SPI, Pin
 from hx711_spi import *
+# from hx711 import *
+
+pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin(13, Pin.OUT)
+spi_SCK = Pin(14)
+
+# spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0,
+             # phase=0, pins=(None, pin_SCK, pin_OUT))
+spi = SPI(1, baudrate=1000000, polarity=0,
+          phase=0, sck=spi_SCK, mosi=pin_SCK, miso=pin_OUT)
+
+hx = HX711(pin_SCK, pin_OUT, spi)
+# hx = HX711(pin_SCK, pin_OUT)
+
 from utime import ticks_ms, ticks_diff, sleep, sleep_ms
 from machine import Pin
-from onewire import DS18X20
-from onewire import OneWire
 
-#DS18B20 data line connected to pin P21
-ow = OneWire(Pin('P21'))
-temp = DS18X20(ow)
-
-
-hx = HX711("P10", "P11", "P9")
-#hx = HX711( "P10", "P11")
-hx.OFFSET = -150000
+hx.OFFSET = 0 # -150000
+hx.set_gain(128)
+sleep_ms(50)
 
 data = [0 for _ in range(100)]
 
@@ -22,7 +30,6 @@ def get_median(hx, num=100):
     return data[num // 2]
 
 def run(loops = 100):
-    temp.start_conversion()
     start = ticks_ms()
     hx.set_gain(128)
     sleep_ms(50)
@@ -30,8 +37,7 @@ def run(loops = 100):
     hx.set_gain(32)
     sleep_ms(50)
     resultb = get_median(hx, loops)
-    t = temp.read_temp_async()
-    print(resulta, resultb, t)
+    print(resulta, resultb)
 
 def run100(loops=100, delay = 1):
     for _ in range (loops):
@@ -39,10 +45,11 @@ def run100(loops=100, delay = 1):
         if delay:
             sleep(delay)
 
-def minmax(loops=10000):
-    middle = hx.read_average(1000)
+def minmax(loops=10000, raw=True):
+    hx.set_gain(128)
+    middle = hx.read_average(min(loops, 1000))
     hx.filtered = middle
-    middle -= hx.OFFSET
+    middle = abs(middle) - hx.OFFSET
     cnt0003 = 0
     cnt001 = 0
     cnt003 = 0
@@ -50,9 +57,12 @@ def minmax(loops=10000):
     cnt030 = 0
     cnt100 = 0
     cntx = 0
-    print ("Average", middle)
+    print ("Mittelwert", middle)
     for _ in range(loops):
-        val = hx.read_lowpass() - hx.OFFSET
+        if raw is True:
+            val = abs(hx.read()) - hx.OFFSET
+        else:
+            val = abs(hx.read_lowpass()) - hx.OFFSET
         if middle * (1 - 0.00003) < val < middle * (1 + 0.00003):
             cnt0003 += 1
         elif middle * (1 - 0.0001) < val < middle * (1 + 0.0001):
@@ -74,4 +84,4 @@ def minmax(loops=10000):
 
 
 run()
-#minmax(1000)
+# minmax(10000)

@@ -1,25 +1,26 @@
-from machine import Pin, SPI, idle
+from machine import idle
 
 
 class HX711:
-    def __init__(self, dout, pd_sck, spi_clk, gain=128):
+    def __init__(self, pd_sck, dout, spi, gain=128):
+        self.pSCK = pd_sck
+        self.pOUT = dout
+        self.spi = spi
 
-        self.pSCK = Pin(pd_sck, mode=Pin.OUT)
-        self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)
-        self.spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0,
-                       phase=0, pins=(spi_clk, pd_sck, dout))
         self.pSCK(0)
 
         self.clock_25 = b'\xaa\xaa\xaa\xaa\xaa\xaa\x80'
         self.clock_26 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa0'
         self.clock_27 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa8'
         self.clock = self.clock_25
-        self.lookup = (b'\x00\x01\x00\x00\x02\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x04\x05\x00\x00\x06\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x08\x09\x00\x00\x0a\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x0c\x0d\x00\x00\x0e\x0f')
+        self.lookup = (b'\x00\x01\x00\x00\x02\x03\x00\x00\x00\x00\x00\x00'
+                       b'\x00\x00\x00\x00\x04\x05\x00\x00\x06\x07\x00\x00'
+                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                       b'\x00\x00\x00\x00\x08\x09\x00\x00\x0a\x0b\x00\x00'
+                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x0d\x00\x00'
+                       b'\x0e\x0f')
         self.in_data = bytearray(7)
 
         self.OFFSET = 0
@@ -40,7 +41,7 @@ class HX711:
 
         self.read()
         self.filtered = self.read()
-        print('Gain & initial value set')
+        # print('Gain & initial value set')
 
     def read(self):
         # wait for the device to get ready

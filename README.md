@@ -8,16 +8,18 @@ the class instantiation, both variants offer the same methods.
 
 ### hx711 = HX711(data_pin, clock_pin, gain=128)
 
-This is the GPIO constructor. data_pin and clock_pin are the names of the GPIO
-pins used for the communication. clock_pin must not be an input-only pin.
+This is the GPIO constructor. data_pin and clock_pin are the pin objects
+of the GPIO pins used for the communication. clock_pin must not be an input-only pin.
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
-### hx711 = HX711(data_pin, clock_pin, spi_clk, gain=128)
+### hx711 = HX711(data_pin, clock_pin, spi, gain=128)
 
-This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI.
-spi_clk must be assigned but will not be be used. Input-only pins must not be used for
-clock_pin and spi_clk. gain is the setting of gain and channel of the load cell amplifier.
+This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI. These must be
+Pin objects, with data_pin defined for input, clock_pin defined as output. The must be supplied
+in addition to the spi object, even if spi uses the same  pins for miso and mosi.
+spi is the SPI object. The spi clock signal will not be be used.
+gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
 ## Methods
@@ -74,20 +76,98 @@ Set the load cell to sleep mode.
 
 Switch the load cell on again.
 
-## Example
+## Examples
 
 ```
-# Example for Pycom device.
+# Example for Pycom device, gpio mode
 # Connections:
-# xxPy | HX711
-# -----|-----------
-# P9   |  data_pin
-# P10  |  clock_pin
+# Pin # | HX711
+# ------|-----------
+# P9    | data_pin
+# P10   | clock_pin
 #
 
 from hx711 import HX711
+from machine import Pin
 
-hx711 = HX711('P9', 'P10')
+pin_OUT = Pin("P9", Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin("P10", Pin.OUT)
+
+hx711 = HX711(pin_SCK, pin_OUT)
+
+hx711.tare()
+value = hx711.read()
+value = hx711.get_value()
+```
+
+```
+# Example for micropython.org device, gpio mode
+# Connections:
+# Pin # | HX711
+# ------|-----------
+# 12    | data_pin
+# 13    | clock_pin
+#
+
+from hx711 import HX711
+from machine import Pin
+
+pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin(13, Pin.OUT)
+
+hx711 = HX711(pin_SCK, pin_OUT)
+
+hx711.tare()
+value = hx711.read()
+value = hx711.get_value()
+```
+
+```
+# Example for Pycom device, spi mode
+# Connections:
+# Pin # | HX711
+# ------|-----------
+# P9    | data_pin
+# P10   | clock_pin
+# None  | spi clock
+#
+
+from hx711_spi import HX711
+from machine import Pin, SPI
+
+pin_OUT = Pin("P9", Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin("P10", Pin.OUT)
+
+spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0,
+             phase=0, pins=(None, pin_SCK, pin_OUT))
+
+hx = HX711(pin_SCK, pin_OUT, spi)
+
+hx711.tare()
+value = hx711.read()
+value = hx711.get_value()
+```
+
+```
+# Example for micropython.org device, spi mode
+# Connections:
+# Pin # | HX711
+# ------|-----------
+# 12    | data_pin
+# 13    | clock_pin
+# 14    | spi clock
+
+from hx711_spi import HX711
+from machine import Pin
+
+pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin(13, Pin.OUT)
+spi_SCK = Pin(14)
+
+spi = SPI(1, baudrate=1000000, polarity=0,
+          phase=0, sck=spi_SCK, mosi=pin_SCK, miso=pin_OUT)
+
+hx = HX711(pin_SCK, pin_OUT, spi)
 
 hx711.tare()
 value = hx711.read()

@@ -1,21 +1,19 @@
-from machine import Pin, enable_irq, disable_irq, idle
-
+from machine import enable_irq, disable_irq, idle
 
 class HX711:
-    def __init__(self, dout, pd_sck, gain=128):
-
-        self.pSCK = Pin(pd_sck, mode=Pin.OUT)
-        self.pOUT = Pin(dout, mode=Pin.IN, pull=Pin.PULL_DOWN)
+    def __init__(self, pd_sck, dout, gain=128):
+        self.pSCK = pd_sck
+        self.pOUT = dout
         self.pSCK.value(False)
 
         self.GAIN = 0
         self.OFFSET = 0
         self.SCALE = 1
 
-        self.time_constant = 0.1
+        self.time_constant = 0.25
         self.filtered = 0
 
-        self.set_gain(gain)
+        self.set_gain(gain);
 
     def set_gain(self, gain):
         if gain is 128:
@@ -27,7 +25,6 @@ class HX711:
 
         self.read()
         self.filtered = self.read()
-        print('Gain & initial value set')
 
     def is_ready(self):
         return self.pOUT() == 0
@@ -65,15 +62,14 @@ class HX711:
         self.filtered += self.time_constant * (self.read() - self.filtered)
         return self.filtered
 
-    def get_value(self, times=3):
-        return self.read_average(times) - self.OFFSET
+    def get_value(self):
+        return self.read_lowpass() - self.OFFSET
 
-    def get_units(self, times=3):
-        return self.get_value(times) / self.SCALE
+    def get_units(self):
+        return self.get_value() / self.SCALE
 
     def tare(self, times=15):
-        sum = self.read_average(times)
-        self.set_offset(sum)
+        self.set_offset(self.read_average(times))
 
     def set_scale(self, scale):
         self.SCALE = scale
@@ -81,7 +77,7 @@ class HX711:
     def set_offset(self, offset):
         self.OFFSET = offset
 
-    def set_time_constant(self, time_constant=None):
+    def set_time_constant(self, time_constant = None):
         if time_constant is None:
             return self.time_constant
         elif 0 < time_constant < 1.0:

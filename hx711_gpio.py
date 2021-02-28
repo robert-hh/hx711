@@ -31,8 +31,12 @@ class HX711:
 
     def read(self):
         # wait for the device being ready
-        while self.pOUT() == 1:
-            idle()
+        for _ in range(500):
+            if self.pOUT() == 0:
+                break
+            time.sleep_ms(1)
+        else:
+            raise OSError("Sensor does not respond")
 
         # shift in data, and gain & channel info
         result = 0

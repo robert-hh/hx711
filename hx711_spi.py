@@ -1,4 +1,5 @@
 from machine import idle
+import time
 
 
 class HX711:
@@ -45,8 +46,12 @@ class HX711:
 
     def read(self):
         # wait for the device to get ready
-        while self.pOUT() != 0:
-            idle()
+        for _ in range(500):
+            if self.pOUT() == 0:
+                break
+            time.sleep_ms(1)
+        else:
+            raise OSError("Sensor does not respond")
 
         # get the data and set channel and gain
         self.spi.write_readinto(self.clock, self.in_data)

@@ -1,4 +1,4 @@
-from machine import Pin, idle
+from machine import Pin, idle, Timer
 import time
 import rp2
 
@@ -14,11 +14,11 @@ class HX711:
 
         self.time_constant = 0.25
         self.filtered = 0
+        self.sm_timer = Timer()
 
         # create the state machine
         self.sm = rp2.StateMachine(0, self.hx711_pio, freq=1_000_000,
                                    sideset_base=self.pSCK, in_base=self.pOUT)
-        self.sm.active(1)  # start the state machine
         self.set_gain(gain);
 
 
@@ -52,11 +52,24 @@ class HX711:
     def is_ready(self):
         return self.pOUT() == 0
 
+    def sm_expired(self, obj):
+        self.sensor_fail = True        # set flas
+        self.pOUT.init(Pin.OPEN_DRAIN) # reconfigure Pin
+        self.pOUT.value(0)             # simulate ready signal
+
     def read(self):
+        self.sensor_fail = False
+        self.sm_timer.init(mode=Timer.ONE_SHOT, period=500, callback=self.sm_expired)
         # Feed the waiting state machine & get the data
+        self.sm.active(1)  # start the state machine
         self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start
         time.sleep_us(self.GAIN + 24)       # wait a while for the data
         result = self.sm.get() >> self.GAIN # get the result & discard GAIN bits
+        self.sm.active(0)  # start the state machine
+        self.sm_timer.deinit()
+        if self.sensor_fail:
+            self.pOUT.value(1)  # take back stress
+            raise OSError("Sensor does not respond")
 
         # check sign
         if result > 0x7fffff:

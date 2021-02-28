@@ -22,6 +22,13 @@ spi is the SPI object. The spi clock signal will not be be used.
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
+### hx711 = HX711(data_pin, clock_pin, gain=128)
+
+This is the Raspberry Pi PIO constructor. data_pin and clock_pin are the pin objects
+of the GPIO pins used for the communication. clock_pin must not be an input-only pin.
+gain is the setting of gain and channel of the load cell amplifier.
+The default value of 128 also selects channel A.
+
 ## Methods
 
 ### hx711.set_gain(gain)
@@ -110,6 +117,28 @@ value = hx711.get_value()
 #
 
 from hx711 import HX711
+from machine import Pin
+
+pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin(13, Pin.OUT)
+
+hx711 = HX711(pin_SCK, pin_OUT)
+
+hx711.tare()
+value = hx711.read()
+value = hx711.get_value()
+```
+
+```
+# Example for micropython.org device, RP2040 PIO mode
+# Connections:
+# Pin # | HX711
+# ------|-----------
+# 12    | data_pin
+# 13    | clock_pin
+#
+
+from hx711_pio import HX711
 from machine import Pin
 
 pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)

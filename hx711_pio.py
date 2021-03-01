@@ -18,7 +18,8 @@ class HX711:
 
         # create the state machine
         self.sm = rp2.StateMachine(0, self.hx711_pio, freq=1_000_000,
-                                   sideset_base=self.pSCK, in_base=self.pOUT)
+                                   sideset_base=self.pSCK, in_base=self.pOUT,
+                                   jmp_pin=self.pOUT)
         self.set_gain(gain);
 
 
@@ -29,14 +30,29 @@ class HX711:
         autopush=False,
     )
     def hx711_pio():
-        wait(0, pin, 0)     .side (0)   # wait for the device being ready
+        # wait(0, pin, 0)     .side (0)   # wait for the device being ready
+        pull()              .side (0)   # get the initial wait time
+        mov(y, osr)         .side (0)
         pull()              .side (0)   # get the number of clock cycles
         mov(x, osr)         .side (0)
-        label("loop")
+
+        label("start")
+        jmp(pin, "nostart") .side (0)   # not ready yet
+        jmp("bitloop")      .side (0)   # ready, get data
+
+        label("nostart")
+        jmp(y_dec, "start") .side (0)   # another attempt
+        mov(isr, y)         .side (0)   # set 0xffffffff as error value
+        jmp("finish")       .side (0)
+
+        label("bitloop")
         nop()               .side (1)   # active edge
         in_(pins, 1)        .side (1)   # get the pin and shift it in
-        jmp(x_dec, "loop")  .side (0)   # test for more bits
+        jmp(x_dec, "bitloop")  .side (0)   # test for more bits
+        
+        label("finish")
         push(block)         .side (0)   # no, deliver data and start over
+
 
     def set_gain(self, gain):
         if gain is 128:
@@ -52,23 +68,15 @@ class HX711:
     def is_ready(self):
         return self.pOUT() == 0
 
-    def sm_expired(self, obj):
-        self.sensor_fail = True        # set flas
-        self.pOUT.init(Pin.OPEN_DRAIN) # reconfigure Pin
-        self.pOUT.value(0)             # simulate ready signal
-
     def read(self):
-        self.sensor_fail = False
-        self.sm_timer.init(mode=Timer.ONE_SHOT, period=500, callback=self.sm_expired)
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
+        self.sm.put(250_000)     # set wait time to 500ms
         self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start
-        time.sleep_us(self.GAIN + 24)       # wait a while for the data
         result = self.sm.get() >> self.GAIN # get the result & discard GAIN bits
-        self.sm.active(0)  # start the state machine
-        self.sm_timer.deinit()
-        if self.sensor_fail:
-            self.pOUT.value(1)  # take back stress
+        print(hex(result))
+        self.sm.active(0)  # stop the state machine
+        if result == 0x7fffffff:
             raise OSError("Sensor does not respond")
 
         # check sign

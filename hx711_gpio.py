@@ -1,4 +1,5 @@
 from machine import enable_irq, disable_irq, idle
+import time
 
 class HX711:
     def __init__(self, pd_sck, dout, gain=128):

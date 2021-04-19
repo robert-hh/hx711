@@ -6,14 +6,14 @@ the class instantiation, both variants offer the same methods.
 
 ## Constructor
 
-### hx711 = HX711(data_pin, clock_pin, gain=128)
+### hx711 = HX711(clock_pin, data_pin, gain=128)
 
 This is the GPIO constructor. data_pin and clock_pin are the pin objects
 of the GPIO pins used for the communication. clock_pin must not be an input-only pin.
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
-### hx711 = HX711(data_pin, clock_pin, spi, gain=128)
+### hx711 = HX711(clock_pin, data_pin, spi, gain=128)
 
 This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI. These must be
 Pin objects, with data_pin defined for input, clock_pin defined as output. The must be supplied
@@ -22,7 +22,7 @@ spi is the SPI object. The spi clock signal will not be be used.
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
-### hx711 = HX711(data_pin, clock_pin, gain=128)
+### hx711 = HX711(clock_pin, data_pin, gain=128)
 
 This is the Raspberry Pi PIO constructor. data_pin and clock_pin are the pin objects
 of the GPIO pins used for the communication. clock_pin must not be an input-only pin.

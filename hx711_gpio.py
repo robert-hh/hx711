@@ -1,3 +1,4 @@
+"""
 MIT License
 
 Copyright (c) 2019 
@@ -19,9 +20,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+"""
 
 from machine import enable_irq, disable_irq, idle
 import time
+
 
 class HX711:
     def __init__(self, pd_sck, dout, gain=128):
@@ -36,7 +39,7 @@ class HX711:
         self.time_constant = 0.25
         self.filtered = 0
 
-        self.set_gain(gain);
+        self.set_gain(gain)
 
     def set_gain(self, gain):
         if gain is 128:
@@ -74,7 +77,7 @@ class HX711:
         result >>= self.GAIN
 
         # check sign
-        if result > 0x7fffff:
+        if result > 0x7FFFFF:
             result -= 0x1000000
 
         return result
@@ -86,7 +89,9 @@ class HX711:
         return sum / times
 
     def read_lowpass(self):
-        self.filtered += self.time_constant * (self.read() - self.filtered)
+        self.filtered += self.time_constant * (
+            self.read() - self.filtered
+        )
         return self.filtered
 
     def get_value(self):
@@ -104,7 +109,7 @@ class HX711:
     def set_offset(self, offset):
         self.OFFSET = offset
 
-    def set_time_constant(self, time_constant = None):
+    def set_time_constant(self, time_constant=None):
         if time_constant is None:
             return self.time_constant
         elif 0 < time_constant < 1.0:

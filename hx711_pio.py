@@ -1,3 +1,4 @@
+"""
 MIT License
 
 Copyright (c) 2019 
@@ -19,10 +20,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+"""
 
 from machine import Pin, idle, Timer
 import time
 import rp2
+
 
 class HX711:
     def __init__(self, clk, data, gain=128):
@@ -39,11 +42,15 @@ class HX711:
         self.sm_timer = Timer()
 
         # create the state machine
-        self.sm = rp2.StateMachine(0, self.hx711_pio, freq=1_000_000,
-                                   sideset_base=self.pSCK, in_base=self.pOUT,
-                                   jmp_pin=self.pOUT)
-        self.set_gain(gain);
-
+        self.sm = rp2.StateMachine(
+            0,
+            self.hx711_pio,
+            freq=1_000_000,
+            sideset_base=self.pSCK,
+            in_base=self.pOUT,
+            jmp_pin=self.pOUT,
+        )
+        self.set_gain(gain)
 
     @rp2.asm_pio(
         sideset_init=rp2.PIO.OUT_LOW,
@@ -53,28 +60,27 @@ class HX711:
     )
     def hx711_pio():
         # wait(0, pin, 0)     .side (0)   # wait for the device being ready
-        pull()              .side (0)   # get the initial wait time
-        mov(y, osr)         .side (0)
-        pull()              .side (0)   # get the number of clock cycles
-        mov(x, osr)         .side (0)
+        pull().side(0)  # get the initial wait time
+        mov(y, osr).side(0)
+        pull().side(0)  # get the number of clock cycles
+        mov(x, osr).side(0)
 
         label("start")
-        jmp(pin, "nostart") .side (0)   # not ready yet
-        jmp("bitloop")      .side (0)   # ready, get data
+        jmp(pin, "nostart").side(0)  # not ready yet
+        jmp("bitloop").side(0)  # ready, get data
 
         label("nostart")
-        jmp(y_dec, "start") .side (0)   # another attempt
-        mov(isr, y)         .side (0)   # set 0xffffffff as error value
-        jmp("finish")       .side (0)
+        jmp(y_dec, "start").side(0)  # another attempt
+        mov(isr, y).side(0)  # set 0xffffffff as error value
+        jmp("finish").side(0)
 
         label("bitloop")
-        nop()               .side (1)   # active edge
-        in_(pins, 1)        .side (1)   # get the pin and shift it in
-        jmp(x_dec, "bitloop")  .side (0)   # test for more bits
-        
-        label("finish")
-        push(block)         .side (0)   # no, deliver data and start over
+        nop().side(1)  # active edge
+        in_(pins, 1).side(1)  # get the pin and shift it in
+        jmp(x_dec, "bitloop").side(0)  # test for more bits
 
+        label("finish")
+        push(block).side(0)  # no, deliver data and start over
 
     def set_gain(self, gain):
         if gain is 128:
@@ -93,16 +99,18 @@ class HX711:
     def read(self):
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
-        self.sm.put(250_000)     # set wait time to 500ms
-        self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start
-        result = self.sm.get() >> self.GAIN # get the result & discard GAIN bits
+        self.sm.put(250_000)  # set wait time to 500ms
+        self.sm.put(self.GAIN + 24 - 1)  # set pulse count 25-27, start
+        result = (
+            self.sm.get() >> self.GAIN
+        )  # get the result & discard GAIN bits
         print(hex(result))
         self.sm.active(0)  # stop the state machine
-        if result == 0x7fffffff:
+        if result == 0x7FFFFFFF:
             raise OSError("Sensor does not respond")
 
         # check sign
-        if result > 0x7fffff:
+        if result > 0x7FFFFF:
             result -= 0x1000000
 
         return result
@@ -114,7 +122,9 @@ class HX711:
         return sum / times
 
     def read_lowpass(self):
-        self.filtered += self.time_constant * (self.read() - self.filtered)
+        self.filtered += self.time_constant * (
+            self.read() - self.filtered
+        )
         return self.filtered
 
     def get_value(self):
@@ -132,7 +142,7 @@ class HX711:
     def set_offset(self, offset):
         self.OFFSET = offset
 
-    def set_time_constant(self, time_constant = None):
+    def set_time_constant(self, time_constant=None):
         if time_constant is None:
             return self.time_constant
         elif 0 < time_constant < 1.0:

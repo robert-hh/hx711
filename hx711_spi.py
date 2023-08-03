@@ -1,3 +1,4 @@
+"""
 MIT License
 
 Copyright (c) 2019 
@@ -19,6 +20,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+"""
 
 from machine import idle
 import time
@@ -32,18 +34,20 @@ class HX711:
 
         self.pSCK(0)
 
-        self.clock_25 = b'\xaa\xaa\xaa\xaa\xaa\xaa\x80'
-        self.clock_26 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa0'
-        self.clock_27 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa8'
+        self.clock_25 = b"\xaa\xaa\xaa\xaa\xaa\xaa\x80"
+        self.clock_26 = b"\xaa\xaa\xaa\xaa\xaa\xaa\xa0"
+        self.clock_27 = b"\xaa\xaa\xaa\xaa\xaa\xaa\xa8"
         self.clock = self.clock_25
-        self.lookup = (b'\x00\x01\x00\x00\x02\x03\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x04\x05\x00\x00\x06\x07\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                       b'\x00\x00\x00\x00\x08\x09\x00\x00\x0a\x0b\x00\x00'
-                       b'\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x0d\x00\x00'
-                       b'\x0e\x0f')
+        self.lookup = (
+            b"\x00\x01\x00\x00\x02\x03\x00\x00\x00\x00\x00\x00"
+            b"\x00\x00\x00\x00\x04\x05\x00\x00\x06\x07\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            b"\x00\x00\x00\x00\x08\x09\x00\x00\x0a\x0b\x00\x00"
+            b"\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x0d\x00\x00"
+            b"\x0e\x0f"
+        )
         self.in_data = bytearray(7)
 
         self.OFFSET = 0
@@ -93,7 +97,9 @@ class HX711:
         return sum / times
 
     def read_lowpass(self):
-        self.filtered += self.time_constant * (self.read() - self.filtered)
+        self.filtered += self.time_constant * (
+            self.read() - self.filtered
+        )
         return self.filtered
 
     def get_value(self):

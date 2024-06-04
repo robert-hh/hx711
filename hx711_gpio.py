@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from machine import enable_irq, disable_irq, idle
+from machine import enable_irq, disable_irq, idle, Pin
 import time
 
 class HX711:
@@ -52,13 +52,20 @@ class HX711:
     def is_ready(self):
         return self.pOUT() == 0
 
+    def conversion_done_cb(self, pOUT):
+        self.conversion_done = True
+        pOUT.irq(handler=None)
+
     def read(self):
+        self.conversion_done = False
+        self.pOUT.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
         # wait for the device being ready
         for _ in range(500):
-            if self.pOUT() == 0:
+            if self.conversion_done == True:
                 break
             time.sleep_ms(1)
         else:
+            self.pOUT.irq(handler=None)
             raise OSError("Sensor does not respond")
 
         # shift in data, and gain & channel info

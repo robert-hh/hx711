@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from machine import Pin, idle, Timer
+from machine import Pin, Timer
 import time
 import rp2
 
@@ -52,24 +52,13 @@ class HX711:
         autopush=False,
     )
     def hx711_pio():
-        # wait(0, pin, 0)     .side (0)   # wait for the device being ready
-        pull()              .side (0)   # get the initial wait time
-        mov(y, osr)         .side (0)
         pull()              .side (0)   # get the number of clock cycles
         mov(x, osr)         .side (0)
 
-        label("start")
-        jmp(pin, "nostart") .side (0)   # not ready yet
-        jmp("bitloop")      .side (0)   # ready, get data
-
-        label("nostart")
-        jmp(y_dec, "start") .side (0)   # another attempt
-        mov(isr, y)         .side (0)   # set 0xffffffff as error value
-        jmp("finish")       .side (0)
-
         label("bitloop")
         nop()               .side (1)   # active edge
-        in_(pins, 1)        .side (1)   # get the pin and shift it in
+        nop()               .side (1)
+        in_(pins, 1)        .side (0)   # get the pin and shift it in
         jmp(x_dec, "bitloop")  .side (0)   # test for more bits
         
         label("finish")
@@ -90,10 +79,23 @@ class HX711:
     def is_ready(self):
         return self.pOUT() == 0
 
+    def conversion_done_cb(self, pOUT):
+        self.conversion_done = True
+        pOUT.irq(handler=None)
+
     def read(self):
+        self.conversion_done = False
+        self.pOUT.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
+        # wait for the device being ready
+        for _ in range(500):
+            if self.conversion_done == True:
+                break
+            time.sleep_ms(1)
+        else:
+            self.pOUT.irq(handler=None)
+            raise OSError("Sensor does not respond")
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
-        self.sm.put(250_000)     # set wait time to 500ms
         self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start
         result = self.sm.get() >> self.GAIN # get the result & discard GAIN bits
         self.sm.active(0)  # stop the state machine

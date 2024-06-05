@@ -25,10 +25,10 @@ import time
 import rp2
 
 class HX711:
-    def __init__(self, clk, data, gain=128):
-        self.pSCK = clk
-        self.pOUT = data
-        self.pSCK.value(False)
+    def __init__(self, clock, data, gain=128):
+        self.clock = clock
+        self.data = data
+        self.clock.value(False)
 
         self.GAIN = 0
         self.OFFSET = 0
@@ -40,8 +40,8 @@ class HX711:
 
         # create the state machine
         self.sm = rp2.StateMachine(0, self.hx711_pio, freq=1_000_000,
-                                   sideset_base=self.pSCK, in_base=self.pOUT,
-                                   jmp_pin=self.pOUT)
+                                   sideset_base=self.clock, in_base=self.data,
+                                   jmp_pin=self.data)
         self.set_gain(gain);
 
 
@@ -77,22 +77,22 @@ class HX711:
         self.filtered = self.read()
 
     def is_ready(self):
-        return self.pOUT() == 0
+        return self.data() == 0
 
-    def conversion_done_cb(self, pOUT):
+    def conversion_done_cb(self, data):
         self.conversion_done = True
-        pOUT.irq(handler=None)
+        data.irq(handler=None)
 
     def read(self):
         self.conversion_done = False
-        self.pOUT.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
+        self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
         # wait for the device being ready
         for _ in range(500):
             if self.conversion_done == True:
                 break
             time.sleep_ms(1)
         else:
-            self.pOUT.irq(handler=None)
+            self.data.irq(handler=None)
             raise OSError("Sensor does not respond")
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
@@ -140,8 +140,8 @@ class HX711:
             self.time_constant = time_constant
 
     def power_down(self):
-        self.pSCK.value(False)
-        self.pSCK.value(True)
+        self.clock.value(False)
+        self.clock.value(True)
 
     def power_up(self):
-        self.pSCK.value(False)
+        self.clock.value(False)

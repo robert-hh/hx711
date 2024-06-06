@@ -49,9 +49,6 @@ class HX711:
         self.read()
         self.filtered = self.read()
 
-    def is_ready(self):
-        return self.data() == 0
-
     def conversion_done_cb(self, data):
         self.conversion_done = True
         data.irq(handler=None)

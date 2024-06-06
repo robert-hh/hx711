@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2019 
+# Copyright (c) 2021 
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -75,9 +75,6 @@ class HX711:
 
         self.read()
         self.filtered = self.read()
-
-    def is_ready(self):
-        return self.data() == 0
 
     def conversion_done_cb(self, data):
         self.conversion_done = True

@@ -1,8 +1,11 @@
 # HX711: Python class for the HX711 load cell
 
-This is a very short and simple class. This lib includes two variants of the
-module. One is using direct GPIO pin handling, the other uses SPI. Besides
-the class instantiation, both variants offer the same methods.
+This is a very short and simple class. This lib includes three variants of the
+module. One is using direct GPIO pin handling, the other uses the PIO
+module of the RPI Pico. The third variant uses SPI.
+Besides the class instantiation, all variants offer the same methods.
+The preferred variants are GPIO and PIO, because they deal properly with the conversion
+ready signal resulting in a more precise result.
 
 ## Constructor
 
@@ -13,19 +16,19 @@ of the GPIO pins used for the communication. clock_pin must not be an input-only
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
-### hx711 = HX711(clock_pin, data_pin, spi, gain=128)
-
-This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI. These must be
-Pin objects, with data_pin defined for input, clock_pin defined as output. The must be supplied
-in addition to the spi object, even if spi uses the same  pins for miso and mosi.
-spi is the SPI object. The spi clock signal will not be be used.
-gain is the setting of gain and channel of the load cell amplifier.
-The default value of 128 also selects channel A.
-
 ### hx711 = HX711(clock_pin, data_pin, gain=128)
 
 This is the Raspberry Pi PIO constructor. data_pin and clock_pin are the pin objects
-of the GPIO pins used for the communication. clock_pin must not be an input-only pin.
+of the GPIO pins used for the communication. 
+gain is the setting of gain and channel of the load cell amplifier.
+The default value of 128 also selects channel A.
+
+### hx711 = HX711(clock_pin, data_pin, spi, gain=128)
+
+This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI. These must be
+Pin objects, with data_pin defined for input, clock_pin defined as output. They must be supplied
+in addition to the spi object, even if spi uses the same  pins for miso and mosi.
+spi is the SPI object. The spi clock signal will not be be used.
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 

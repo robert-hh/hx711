@@ -25,7 +25,7 @@ import time
 import rp2
 
 class HX711:
-    def __init__(self, clock, data, gain=128):
+    def __init__(self, clock, data, gain=128, state_machine=0):
         self.clock = clock
         self.data = data
         self.clock.value(False)
@@ -39,7 +39,7 @@ class HX711:
         self.sm_timer = Timer()
 
         # create the state machine
-        self.sm = rp2.StateMachine(0, self.hx711_pio, freq=1_000_000,
+        self.sm = rp2.StateMachine(state_machine, self.hx711_pio, freq=1_000_000,
                                    sideset_base=self.clock, in_base=self.data,
                                    jmp_pin=self.data)
         self.set_gain(gain);

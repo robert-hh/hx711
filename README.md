@@ -16,12 +16,14 @@ of the GPIO pins used for the communication. clock_pin must not be an input-only
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
-### hx711 = HX711(clock_pin, data_pin, gain=128)
+### hx711 = HX711(clock_pin, data_pin, gain=128, state_machine=0)
 
 This is the Raspberry Pi PIO constructor. data_pin and clock_pin are the pin objects
 of the GPIO pins used for the communication. 
 gain is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
+The argument state_machine has to be set to different values if more than one
+HX711 device is used by an application.
 
 ### hx711 = HX711(clock_pin, data_pin, spi, gain=128)
 
@@ -147,7 +149,7 @@ from machine import Pin
 pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
 pin_SCK = Pin(13, Pin.OUT)
 
-hx711 = HX711(pin_SCK, pin_OUT)
+hx711 = HX711(pin_SCK, pin_OUT, state_machine=0)
 
 hx711.tare()
 value = hx711.read()

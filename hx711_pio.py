@@ -42,6 +42,14 @@ class HX711:
         self.sm = rp2.StateMachine(state_machine, self.hx711_pio, freq=1_000_000,
                                    sideset_base=self.clock, in_base=self.data,
                                    jmp_pin=self.data)
+
+        # determine the number of attempts to find the trigger pulse
+        start = time.ticks_us()
+        for _ in range(3):
+            temp = self.data()
+        spent = time.ticks_diff(time.ticks_us(), start)
+        self.__wait_loop = 3_000_000 // spent
+
         self.set_gain(gain);
 
 
@@ -81,16 +89,31 @@ class HX711:
         data.irq(handler=None)
 
     def read(self):
-        self.conversion_done = False
-        self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
-        # wait for the device being ready
-        for _ in range(500):
-            if self.conversion_done == True:
-                break
-            time.sleep_ms(1)
+        if hasattr(self.data, "irq"):
+            self.conversion_done = False
+            self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
+            # wait for the device being ready
+            for _ in range(500):
+                if self.conversion_done == True:
+                    break
+                time.sleep_ms(1)
+            else:
+                self.data.irq(handler=None)
+                raise OSError("Sensor does not respond")
         else:
-            self.data.irq(handler=None)
-            raise OSError("Sensor does not respond")
+            # wait polling for the trigger pulse
+            for _ in range(self.__wait_loop):
+                if self.data():
+                    break
+            else:
+                raise OSError("No trigger pulse found")
+            for _ in range(5000):
+                if not self.data():
+                    break
+                time.sleep_us(100)
+            else:
+                raise OSError("Sensor does not respond")
+
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
         self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start

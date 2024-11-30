@@ -99,7 +99,7 @@ Switch the load cell on again.
 # P10   | clock_pin
 #
 
-from hx711 import HX711
+from hx711_gpio import HX711
 from machine import Pin
 
 pin_OUT = Pin("P9", Pin.IN, pull=Pin.PULL_DOWN)
@@ -121,7 +121,7 @@ value = hx711.get_value()
 # 13    | clock_pin
 #
 
-from hx711 import HX711
+from hx711_gpio import HX711
 from machine import Pin
 
 pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)

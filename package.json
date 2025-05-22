@@ -1,0 +1,8 @@
+{
+  "urls": [
+    ["hx711_gpio.py", "github:robert-hh/hx711/hx711_gpio.py"],
+    ["hx711_pio.py", "github:robert-hh/hx711/hx711_pio.py"]
+  ],
+  "version": "1.0.0",
+  "deps": []
+}

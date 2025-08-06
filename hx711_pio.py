@@ -41,14 +41,7 @@ class HX711:
         # create the state machine
         self.sm = rp2.StateMachine(state_machine, self.hx711_pio, freq=1_000_000,
                                    sideset_base=self.clock, in_base=self.data,
-                                   jmp_pin=self.data)
-
-        # determine the number of attempts to find the trigger pulse
-        start = time.ticks_us()
-        for _ in range(3):
-            temp = self.data()
-        spent = time.ticks_diff(time.ticks_us(), start)
-        self.__wait_loop = 3_000_000 // spent
+                                   set_base=self.data, jmp_pin=self.data)
 
         self.set_gain(gain);
 
@@ -62,12 +55,17 @@ class HX711:
     def hx711_pio():
         pull()              .side (0)   # get the number of clock cycles
         mov(x, osr)         .side (0)
+        set(pindirs, 0)     .side (0)    # Initial set pin direction.
+# Wait for a high level = start of the DATA pulse
+        wait(1, pin, 0)     .side (0)
+# Wait for a low level = DATA signal
+        wait(0, pin, 0)     .side (0)
 
         label("bitloop")
         nop()               .side (1)   # active edge
         nop()               .side (1)
         in_(pins, 1)        .side (0)   # get the pin and shift it in
-        jmp(x_dec, "bitloop")  .side (0)   # test for more bits
+        jmp(x_dec, "bitloop").side (0)  # test for more bits
         
         label("finish")
         push(block)         .side (0)   # no, deliver data and start over
@@ -84,44 +82,23 @@ class HX711:
         self.read()
         self.filtered = self.read()
 
-    def conversion_done_cb(self, data):
-        self.conversion_done = True
-        data.irq(handler=None)
-
     def read(self):
-        if hasattr(self.data, "irq"):
-            self.conversion_done = False
-            self.data.irq(trigger=Pin.IRQ_FALLING, handler=self.conversion_done_cb)
-            # wait for the device being ready
-            for _ in range(500):
-                if self.conversion_done == True:
-                    break
-                time.sleep_ms(1)
-            else:
-                self.data.irq(handler=None)
-                raise OSError("Sensor does not respond")
-        else:
-            # wait polling for the trigger pulse
-            for _ in range(self.__wait_loop):
-                if self.data():
-                    break
-            else:
-                raise OSError("No trigger pulse found")
-            for _ in range(5000):
-                if not self.data():
-                    break
-                time.sleep_us(100)
-            else:
-                raise OSError("Sensor does not respond")
-
         # Feed the waiting state machine & get the data
         self.sm.active(1)  # start the state machine
         self.sm.put(self.GAIN + 24 - 1)     # set pulse count 25-27, start
+        start = time.ticks_ms()
+        while time.ticks_diff(time.ticks_ms(), start) < 500:
+            # Wait for the result
+            if self.sm.rx_fifo() > 0:
+                break
+        else:
+            self.sm.active(0)  # stop the state machine
+            raise OSError("sensor timeout")
+
         result = self.sm.get() >> self.GAIN # get the result & discard GAIN bits
         self.sm.active(0)  # stop the state machine
         if result == 0x7fffffff:
             raise OSError("Sensor does not respond")
-
         # check sign
         if result > 0x7fffff:
             result -= 0x1000000

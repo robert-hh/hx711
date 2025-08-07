@@ -45,6 +45,9 @@ class HX711:
 
         self.set_gain(gain);
 
+    def __call__(self):
+        return self.read()
+
     def set_gain(self, gain):
         if gain is 128:
             self.GAIN = 1

@@ -11,27 +11,28 @@ ready signal resulting in a more precise result.
 
 ### hx711 = HX711(clock_pin, data_pin, gain=128)
 
-This is the GPIO constructor. data_pin and clock_pin are the pin objects
-of the GPIO pins used for the communication. clock_pin must not be an input-only pin.
-gain is the setting of gain and channel of the load cell amplifier.
+This is the GPIO constructor. `data_pin` and `clock_pin` are the pin objects
+of the GPIO pins used for the communication. `clock_pin` must not be an input-only pin.
+`gain` is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
 ### hx711 = HX711(clock_pin, data_pin, gain=128, state_machine=0)
 
-This is the Raspberry Pi PIO constructor. data_pin and clock_pin are the pin objects
+This is the Raspberry Pi PIO constructor. `data_pin` and `clock_pin` are the pin objects
 of the GPIO pins used for the communication. 
-gain is the setting of gain and channel of the load cell amplifier.
+`gain` is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
-The argument state_machine can be set to different values if conflicting with
+The argument `state_machine` can be set to different values if conflicting with
 other uses, like if than one HX711 device is used by an application.
 
 ### hx711 = HX711(clock_pin, data_pin, spi, gain=128)
 
-This is the SPI constructor. data_pin is the SPI MISO, clock_pin the SPI MOSI. These must be
-Pin objects, with data_pin defined for input, clock_pin defined as output. They must be supplied
-in addition to the spi object, even if spi uses the same  pins for miso and mosi.
-spi is the SPI object. The spi clock signal will not be be used.
-gain is the setting of gain and channel of the load cell amplifier.
+This is the SPI constructor. `data_pin` is the SPI MISO, `clock_pin` the SPI MOSI. These must be
+Pin objects, with `data_pin` defined for input, `clock_pin` defined as output.
+They must be supplied in addition to the spi object, even if spi
+uses the same  pins for miso and mosi.
+`spi` is the SPI object. The spi clock signal will not be be used.
+`gain` is the setting of gain and channel of the load cell amplifier.
 The default value of 128 also selects channel A.
 
 ## Methods
@@ -47,13 +48,14 @@ Sets the gain and channel configuration which is used for the next call of hx711
 |32|B|
 
 ### result = hx711.read()
+### result = hx711()
 
 Returns the actual raw value of the load cell. Raw means: not scaled, no offset
 compensation.
 
 ### result = hx711.read_average(times=3)
 
-Returns the raw value of the load cell as the average of times readings of The
+Returns the raw value of the load cell as the average of `times` readings of The
 raw value.
 
 ### result = hx711.read_lowpass()
@@ -65,7 +67,7 @@ filter. The properties of the filter can be set with set_time_constant().
 
 Set the time constant used by hx711.read_lowpass(). The range is 0-1.0. Smaller
 values means longer times to settle and better smoothing.
-If value is None, the actual value of the time constant is returned.
+If `value` is None, the actual value of the time constant is returned.
 
 ### value = hx711.get_value()
 
@@ -78,7 +80,7 @@ hx711.set_scale().
 
 ### hx711.tare(times=15)
 
-Determine the tare value of the load cell by averaging times raw readings.
+Determine the tare value of the load cell by averaging `times` raw readings.
 
 ### hx711.power_down()
 

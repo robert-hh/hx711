@@ -59,8 +59,8 @@ class HX711:
 # Wait for a high level = start of the DATA pulse
         wait(1, pin, 0)     .side (0)
 # Wait for a low level = DATA signal
-        wait(0, pin, 0)     .side (0)
-
+        wait(0, pin, 0)     .side (0)[7]
+        nop()               .side (0)[7] # wait a while with the first clock
         label("bitloop")
         nop()               .side (1)   # active edge
         nop()               .side (1)
@@ -70,6 +70,8 @@ class HX711:
         label("finish")
         push(block)         .side (0)   # no, deliver data and start over
 
+    def __call__(self):
+        return self.read()
 
     def set_gain(self, gain):
         if gain is 128:

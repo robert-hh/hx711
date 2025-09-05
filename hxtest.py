@@ -1,18 +1,19 @@
 from machine import SPI, Pin
-from hx711_spi import *
+# from hx711_spi import *
+from hx711_pio import *
 # from hx711 import *
 
-pin_OUT = Pin(12, Pin.IN, pull=Pin.PULL_DOWN)
-pin_SCK = Pin(13, Pin.OUT)
-spi_SCK = Pin(14)
+pin_OUT = Pin(7, Pin.IN, pull=Pin.PULL_DOWN)
+pin_SCK = Pin(6, Pin.OUT)
+# spi_SCK = Pin(14)
 
 # spi = SPI(0, mode=SPI.MASTER, baudrate=1000000, polarity=0,
              # phase=0, pins=(None, pin_SCK, pin_OUT))
-spi = SPI(1, baudrate=1000000, polarity=0,
-          phase=0, sck=spi_SCK, mosi=pin_SCK, miso=pin_OUT)
+# spi = SPI(1, baudrate=1000000, polarity=0,
+#           phase=0, sck=spi_SCK, mosi=pin_SCK, miso=pin_OUT)
 
-hx = HX711(pin_SCK, pin_OUT, spi)
-# hx = HX711(pin_SCK, pin_OUT)
+# hx = HX711(pin_SCK, pin_OUT, spi)
+hx = HX711(pin_SCK, pin_OUT)
 
 from utime import ticks_ms, ticks_diff, sleep, sleep_ms
 from machine import Pin
@@ -50,20 +51,24 @@ def minmax(loops=10000, raw=True):
     middle = hx.read_average(min(loops, 1000))
     hx.filtered = middle
     middle = abs(middle) - hx.OFFSET
+    cnt00003 = 0
+    cnt0001 = 0
     cnt0003 = 0
     cnt001 = 0
     cnt003 = 0
     cnt010 = 0
-    cnt030 = 0
-    cnt100 = 0
     cntx = 0
-    print ("Mittelwert", middle)
+    print ("Average", middle)
     for _ in range(loops):
         if raw is True:
             val = abs(hx.read()) - hx.OFFSET
         else:
             val = abs(hx.read_lowpass()) - hx.OFFSET
-        if middle * (1 - 0.00003) < val < middle * (1 + 0.00003):
+        if middle * (1 - 0.000003) < val < middle * (1 + 0.000003):
+            cnt00003 += 1
+        elif middle * (1 - 0.00001) < val < middle * (1 + 0.00001):
+            cnt0001 += 1
+        elif middle * (1 - 0.00003) < val < middle * (1 + 0.00003):
             cnt0003 += 1
         elif middle * (1 - 0.0001) < val < middle * (1 + 0.0001):
             cnt001 += 1
@@ -71,17 +76,13 @@ def minmax(loops=10000, raw=True):
             cnt003 += 1
         elif middle * (1 - 0.001) < val < middle * (1 + 0.001):
             cnt010 += 1
-        elif middle * (1 - 0.003) < val < middle * (1 + 0.003):
-            cnt030 += 1
-        elif middle * (1 - 0.01) < val < middle * (1 + 0.01):
-            cnt100 += 1
         else:
             cntx += 1
             print("Really out of band at %d: %d %x"  % (_, int(val), int(val)))
 
-    print("+/- 0.003%% %f\n+/- 0.01%% %f\n+/- 0.03%% %f\n+/- .1%%   %f\n+/- .3%%   %f\n+/- 1%%  %f\nBeyond:  %f" %
-          (cnt0003/loops, cnt001/loops, cnt003/loops, cnt010/loops, cnt030/loops, cnt100/loops, cntx/loops))
+    print("+/- 0.0003%% %f\n+/- 0.001%% %f\n+/- 0.003%% %f\n+/- 0.01%% %f\n+/- 0.03%% %f\n+/- .1%%   %f\nBeyond:  %f" %
+          (cnt00003/loops, cnt0001/loops, cnt0003/loops, cnt001/loops, cnt003/loops, cnt010/loops, cntx/loops))
 
 
-run()
+# run()
 # minmax(10000)

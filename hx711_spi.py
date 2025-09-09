@@ -35,7 +35,8 @@ class HX711:
         self.clock_25 = b'\xaa\xaa\xaa\xaa\xaa\xaa\x80'
         self.clock_26 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa0'
         self.clock_27 = b'\xaa\xaa\xaa\xaa\xaa\xaa\xa8'
-        self.clock = self.clock_25
+        self.clock_table = [None, self.clock_25, self.clock_26, self.clock_27]
+        self.gain_table = {128:1, 32:2, 64:3}
         self.lookup = (b'\x00\x01\x00\x00\x02\x03\x00\x00\x00\x00\x00\x00'
                        b'\x00\x00\x00\x00\x04\x05\x00\x00\x06\x07\x00\x00'
                        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -58,20 +59,16 @@ class HX711:
         return self.read()
 
     def set_gain(self, gain):
-        if gain is 128:
-            self.clock = self.clock_25
-        elif gain is 64:
-            self.clock = self.clock_27
-        elif gain is 32:
-            self.clock = self.clock_26
-
+        if gain in self.gain_table.keys():
+            self.MODE = self.gain_table[gain]
+        else:
+            self.MODE = 1
         self.read()
         self.filtered = self.read()
-        # print('Gain & initial value set')
 
     def read(self):
         # wait for the device to get ready
-        for _ in range(500):
+        for _ in range(1000):
             if self.data() == 0:
                 break
             time.sleep_ms(1)
@@ -79,7 +76,7 @@ class HX711:
             raise OSError("Sensor does not respond")
 
         # get the data and set channel and gain
-        self.spi.write_readinto(self.clock, self.in_data)
+        self.spi.write_readinto(self.clock_table[self.MODE], self.in_data)
 
         # pack the data into a single value
         result = 0

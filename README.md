@@ -87,10 +87,13 @@ Determine the tare value of the load cell by averaging `times` raw readings.
 ### hx711.power_down()
 
 Set the load cell to sleep mode.
+With the hx711_spi.py version this method may work only with SoftSPI.
 
 ### hx711.power_up()
 
 Switch the load cell on again.
+With the hx711_spi.py version this method may work only with SoftSPI.
+
 
 ## Examples
 
